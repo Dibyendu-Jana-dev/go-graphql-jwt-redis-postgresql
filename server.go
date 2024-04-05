@@ -47,7 +47,7 @@ func main() {
 		log.Println("Invalid PORT, application exiting...")
 		os.Exit(1)
 	}
-	log.Printf("Port is %v\n", port)
+  	log.Printf("Port is %v\n", port)
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{}}))
 
@@ -57,3 +57,4 @@ func main() {
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
+
