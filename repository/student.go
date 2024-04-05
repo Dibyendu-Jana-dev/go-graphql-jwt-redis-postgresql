@@ -2,13 +2,15 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
-	"github.com/jmoiron/sqlx"
-	"github.com/valyala/fastjson"
 	"log"
 	"math"
 	"mywon/students_reports/graph/model"
 	"strings"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/valyala/fastjson"
 )
 
 func (conn SQLConnDetails) CreateStudentDetails(ctx context.Context, input model.CreateStudentsInput) (*model.CreateStudentsResponse, error) {
@@ -135,7 +137,7 @@ func (conn SQLConnDetails) CreateStudentDetails(ctx context.Context, input model
 			totalScore += parsedSubject.GetFloat64("Chemistry")
 			average := totalScore / 6
 			avg := int(math.Round(average))
-		
+
 			// Assign avg to score field
 			sqlQuery += `, score = ?`
 			inputArgs = append(inputArgs, avg)
@@ -190,7 +192,7 @@ func (conn SQLConnDetails) GetStudentDetails(ctx context.Context, input model.Ge
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var jsonSubject string
+		var jsonSubject sql.NullString
 		err := rows.Scan(
 			&response.ID,
 			&response.StudentName,
@@ -211,14 +213,25 @@ func (conn SQLConnDetails) GetStudentDetails(ctx context.Context, input model.Ge
 		//if err := json.Unmarshal([]byte(jsonSubject), &response.Subject); err != nil {
 		//	return nil, err
 		//}
-		parsedSubject := fastjson.MustParse(jsonSubject)
-		response.Subject = &model.Subject{
-			Bengali:     parsedSubject.GetFloat64("Bengali"),
-			English:     parsedSubject.GetFloat64("English"),
-			Mathematics: parsedSubject.GetFloat64("Mathematics"),
-			Physics:     parsedSubject.GetFloat64("Physics"),
-			Biology:     parsedSubject.GetFloat64("Biology"),
-			Chemistry:   parsedSubject.GetFloat64("Chemistry"),
+		if jsonSubject.Valid && jsonSubject.String != "" {
+			parsedSubject := fastjson.MustParse(jsonSubject.String)
+			response.Subject = &model.Subject{
+				Bengali:     parsedSubject.GetFloat64("Bengali"),
+				English:     parsedSubject.GetFloat64("English"),
+				Mathematics: parsedSubject.GetFloat64("Mathematics"),
+				Physics:     parsedSubject.GetFloat64("Physics"),
+				Biology:     parsedSubject.GetFloat64("Biology"),
+				Chemistry:   parsedSubject.GetFloat64("Chemistry"),
+			}
+		} else {
+			response.Subject = &model.Subject{
+				Bengali:     0,
+				English:     0,
+				Mathematics: 0,
+				Physics:     0,
+				Biology:     0,
+				Chemistry:   0,
+			}
 		}
 	}
 	return &response, nil
@@ -287,8 +300,6 @@ func (conn SQLConnDetails) GetSignuPDetails(eventCtx context.Context, userID int
 	return signupDetails, nil
 
 }
-
-
 
 func (conn SQLConnDetails) IsAlreadyExistUniqueField(eventCtx context.Context, email string, username string) bool {
 	querystring := `SELECT 1 FROM ` + conn.PgSchema + `.users WHERE email = $1 or user_name = $2`

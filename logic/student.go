@@ -2,7 +2,6 @@ package logic
 
 import (
 	"context"
-	"log"
 	"mywon/students_reports/constants"
 	"mywon/students_reports/graph/model"
 	"mywon/students_reports/jwt"
@@ -98,12 +97,9 @@ func CreateUser(ctx context.Context,input model.CreateUserInput)(*model.CreateUs
 	if err != nil {
 		return nil, err
 	}
-log.Println("@@@@@@@@@@@@@@@@@@@")
 	signUpDetails, err := conn.GetSignuPDetails(ctx, userId)
-	log.Println("@@@@@@@@@@@@@@@@@@@1")
 
 	if err != nil {
-		log.Println("@@@@@@@@@@@@@@@@@@@3")
 		return nil, err
 	}
 
